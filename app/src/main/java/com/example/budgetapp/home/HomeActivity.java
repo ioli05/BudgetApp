@@ -1,11 +1,16 @@
 package com.example.budgetapp.home;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.app.DatePickerDialog;
+import android.database.DataSetObserver;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.widget.ListView;
+import android.widget.TextView;
+
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.budgetapp.R;
 import com.github.mikephil.charting.charts.PieChart;
@@ -15,22 +20,23 @@ import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import model.CategoryModel;
 import model.TranzactionModel;
 
+import static java.util.Objects.isNull;
 
-public class HomeActivity extends AppCompatActivity implements OnChartValueSelectedListener {
+@RequiresApi(api = Build.VERSION_CODES.O)
+public class HomeActivity extends AppCompatActivity implements OnChartValueSelectedListener, ButtonClickNotify {
 
     PieChart mPieChart;
     ListView mListView;
@@ -38,7 +44,7 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     FirebaseUser mCurrentUser;
     FirebaseFirestore db;
 
-    List<DocumentSnapshot> myListOfDocuments;
+    DatabaseService mDatabaseService;
 
     int[] colors;
 
@@ -47,40 +53,104 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     ArrayList<TranzactionModel> mTranzactionModelList = new ArrayList<>();
     ArrayList<TranzactionModel> mTranzactionModelListFiltered = new ArrayList<>();
 
+    ArrayList<CategoryModel> mCategoryList = new ArrayList<>();
+    ArrayList<CategoryModel> mCategoryListUser = new ArrayList<>();
+
     String selectedPieValue;
 
+    TextView mStartDate, mEndDate;
+    DatePickerDialog.OnDateSetListener mStartDateListener, mEndDateListener;
+
+    private PieDataSet mPieDataSet = new PieDataSet(Collections.emptyList(), "");
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
 
         initializeFields();
+        initializeListeners();
 
-        db.collection("users").document(mCurrentUser.getUid())
-                .collection("tranzactions")
-                .get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if (task.isSuccessful()) {
-                    myListOfDocuments = task.getResult().getDocuments();
-                    fetchDatabaseDataListView();
-                    initializeAllElementsListView();
-                    addToPieCart();
-                    addToListViewAdapterElements();
-                }
+        addToPieChart();
+        addToListViewAdapterElements();
+
+        fetchData();
+    }
+
+    private void fetchData() {
+        mDatabaseService.fetchTransaction(mStartDate.getText().toString(),
+                mEndDate.getText().toString());
+
+        mDatabaseService.fetchDefaultCategories();
+
+        mDatabaseService.fetchUserCategory();
+    }
+
+    private void initializeListeners() {
+
+        mStartDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog startDate = new DatePickerDialog(
+                    HomeActivity.this,
+                    android.R.style.Theme_Holo_Light_Dialog,
+                    mStartDateListener,
+                    year, month, day);
+            startDate.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            startDate.show();
+        });
+        mStartDateListener = (view, year, month, dayOfMonth) -> {
+            String date = (month + 1) + "/" + dayOfMonth + "/" + year;
+            mStartDate.setText(date);
+        };
+
+        mEndDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+
+            DatePickerDialog endDate = new DatePickerDialog(
+                    HomeActivity.this,
+                    android.R.style.Theme_Holo_Light_Dialog,
+                    mEndDateListener,
+                    year, month, day);
+            endDate.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            endDate.show();
+        });
+        mEndDateListener = (view, year, month, dayOfMonth) -> {
+            String date = (month + 1) + "/" + dayOfMonth + "/" + year;
+            mEndDate.setText(date);
+
+
+            this.mDatabaseService.fetchTransaction(
+                    mStartDate.getText().toString(),
+                    mEndDate.getText().toString());
+        };
+
+        this.mDatabaseService.setDatabaseServiceTransactionListener((transactionModels, filTransactionModelList) -> {
+            refreshData(transactionModels, filTransactionModelList);
+            refreshPieChartData();
+            mPieChart.notifyDataSetChanged();
+            mPieChart.invalidate();
+            mTranzactionAdapter.notifyDataSetChanged();
+        });
+
+        this.mDatabaseService.setDatabaseCategoryFetchListener((categoriesList, isUserCustomCategories) -> {
+
+            if (isUserCustomCategories) {
+                this.mCategoryListUser.clear();
+                this.mCategoryListUser.addAll(categoriesList);
+            } else {
+                this.mCategoryList.clear();
+                this.mCategoryList.addAll(categoriesList);
             }
         });
-    }
-
-    private void fetchDatabaseDataListView(){
-        for(DocumentSnapshot doc : myListOfDocuments) {
-            mTranzactionModelList.add(new TranzactionModel((String)doc.getData().get("name"), doc.getDouble("sum"), (String)doc.getData().get("category")));
-        }
-    }
-
-    private void initializeAllElementsListView() {
-        mTranzactionModelListFiltered = (ArrayList<TranzactionModel>) mTranzactionModelList.clone();
     }
 
     private void refreshData() {
@@ -88,69 +158,97 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         mTranzactionModelListFiltered.addAll(mTranzactionModelList);
     }
 
-    private void addToPieCart() {
-        PieDataSet mPieDataSet = new PieDataSet(getPieData(), "");
+    private void refreshData(List<TranzactionModel> transactionModels,
+                             List<TranzactionModel> filtredTransactionModels) {
 
-        mPieDataSet.setColors(colors);
+        this.mTranzactionModelList.clear();
+        this.mTranzactionModelList.addAll(transactionModels);
 
-        PieData mPieData = new PieData(mPieDataSet);
+        this.mTranzactionModelListFiltered.clear();
+        this.mTranzactionModelListFiltered.addAll(filtredTransactionModels);
+    }
 
-        mPieChart.setData(mPieData);
-        mPieChart.invalidate();
-        mPieChart.setHighlightPerTapEnabled(true);
+    private void refreshPieChartData() {
+        this.mPieDataSet.setValues(getPieData());
+    }
 
-        mPieChart.setOnChartValueSelectedListener(this);
+    private void addToPieChart() {
+
+        if (!isNull(this.mPieDataSet)) {
+
+            mPieDataSet.setColors(colors);
+
+            PieData mPieData = new PieData(mPieDataSet);
+
+            mPieChart.setData(mPieData);
+            mPieChart.invalidate();
+            mPieChart.setHighlightPerTapEnabled(true);
+
+            mPieChart.setOnChartValueSelectedListener(this);
+        }
     }
 
     private void addToListViewAdapterElements() {
 
-        mTranzactionAdapter = new TranzactionAdapter(this, mTranzactionModelListFiltered);
+        mTranzactionAdapter = new TranzactionAdapter(this, mTranzactionModelListFiltered, db, mCurrentUser, mPieChart);
         mListView = findViewById(R.id.tranzactionList);
         mListView.setAdapter(mTranzactionAdapter);
-
-        mListView.setOnItemClickListener((parent, view, position, id) -> {
-            //Toast.makeText(getApplicationContext(),"Place Your First Option Code",Toast.LENGTH_SHORT).show();
+        mTranzactionAdapter.setmCategoryModelList(mCategoryList);
+        mTranzactionAdapter.setmCategoryModelUserList(mCategoryListUser);
+        mTranzactionAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                refreshPieChartData();
+                mPieChart.invalidate();
+                mPieChart.notifyDataSetChanged();
+            }
         });
+
     }
 
-    private void initializeFields(){
-       colors = new int[]{Color.BLACK, Color.CYAN, Color.GREEN, Color.MAGENTA};
 
-       mPieChart = findViewById(R.id.tranzactionPieChart);
-       mListView = findViewById(R.id.tranzactionList);
+    private void initializeFields() {
+        colors = new int[]{Color.BLACK, Color.CYAN, Color.GREEN, Color.MAGENTA};
 
-       mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
-       db = FirebaseFirestore.getInstance();
+        mPieChart = findViewById(R.id.tranzactionPieChart);
+        mListView = findViewById(R.id.tranzactionList);
+
+        mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
+        db = FirebaseFirestore.getInstance();
+
+        mDatabaseService = DatabaseService.instance();
+
+        mStartDate = findViewById(R.id.startDate);
+        mEndDate = findViewById(R.id.endDate);
     }
 
-    private ArrayList<PieEntry> getPieData(){
+    private ArrayList<PieEntry> getPieData() {
 
         List<String> categories;
 
-        categories =  mTranzactionModelList.stream().map(TranzactionModel::getCategory).distinct().collect(Collectors.toList());
+        categories = mTranzactionModelList.stream().map(TranzactionModel::getCategory).distinct().collect(Collectors.toList());
         ArrayList<PieEntry> mPieData = new ArrayList<>();
 
-        for (String current : categories){
-            double categorysum = mTranzactionModelList.stream().filter(tranzaction ->tranzaction.getCategory().equals(current)).map(TranzactionModel::getSum).reduce(0.0, Double::sum);
-            mPieData.add(new PieEntry((float)categorysum, current));
+        for (String current : categories) {
+            double categorysum = mTranzactionModelList.stream().filter(tranzaction -> tranzaction.getCategory().equals(current)).map(TranzactionModel::getSum).reduce(0.0, Double::sum);
+            mPieData.add(new PieEntry((float) categorysum, current));
         }
         return mPieData;
     }
 
     @Override
     public void onValueSelected(Entry e, Highlight h) {
+
         PieEntry pe = (PieEntry) e;
         selectedPieValue = pe.getLabel();
 
         mTranzactionAdapter.clear();
 
-
-        for (TranzactionModel tranzaction : mTranzactionModelList){
-            if (tranzaction.getCategory().equals(selectedPieValue)){
+        for (TranzactionModel tranzaction : mTranzactionModelList) {
+            if (tranzaction.getCategory().equals(selectedPieValue)) {
                 mTranzactionModelListFiltered.add(tranzaction);
             }
         }
-
         mTranzactionAdapter.notifyDataSetChanged();
     }
 
@@ -159,8 +257,12 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
 
         mTranzactionAdapter.clear();
         refreshData();
-
         mTranzactionAdapter.notifyDataSetChanged();
+
+    }
+
+    @Override
+    public void onButtonClick(int position) {
 
     }
 }

@@ -1,15 +1,19 @@
 package model;
 
 
+import java.util.Date;
+
 public class TranzactionModel {
     String name;
     Double sum;
     String category;
+    Date date;
 
-    public TranzactionModel(String name, Double sum, String category) {
+    public TranzactionModel(String name, Double sum, String category, Date date) {
         this.name = name;
         this.sum = sum;
         this.category = category;
+        this.date = date;
     }
 
     public String getName() {
@@ -34,6 +38,14 @@ public class TranzactionModel {
 
     public void setCategory(String category) {
         this.category = category;
+    }
+
+    public Date getDate() {
+        return date;
+    }
+
+    public void setDate(Date date) {
+        this.date = date;
     }
 
 }
