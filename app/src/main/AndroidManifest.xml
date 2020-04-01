@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".home.TranzactionAdapter"/>
+        <activity android:name=".adapter.TranzactionAdapter" />
         <activity android:name=".home.HomeActivity" />
         <activity android:name=".user.SignupActivity" />
         <activity android:name=".user.LoginActivity" >

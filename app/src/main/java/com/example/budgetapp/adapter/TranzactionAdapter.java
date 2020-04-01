@@ -1,4 +1,4 @@
-package com.example.budgetapp.home;
+package com.example.budgetapp.adapter;
 
 import android.app.Activity;
 import android.view.LayoutInflater;
@@ -10,6 +10,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.budgetapp.R;
+import com.example.budgetapp.model.CategoryModel;
+import com.example.budgetapp.model.SearchModel;
+import com.example.budgetapp.model.TranzactionModel;
+import com.example.budgetapp.utils.ContactSearchDialogCompat;
 import com.example.budgetapp.utils.IconDrawable;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.auth.FirebaseUser;
@@ -18,10 +22,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import model.CategoryModel;
-import model.SearchModel;
-import model.TranzactionModel;
 
 public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
 

@@ -1,8 +1,8 @@
 package com.example.budgetapp.listeners.database;
 
-import java.util.List;
+import com.example.budgetapp.model.CategoryModel;
 
-import model.CategoryModel;
+import java.util.List;
 
 public interface DatabaseCategoryFetchListener {
 

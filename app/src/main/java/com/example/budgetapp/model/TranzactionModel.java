@@ -1,4 +1,4 @@
-package model;
+package com.example.budgetapp.model;
 
 
 import java.util.Date;

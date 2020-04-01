@@ -1,8 +1,8 @@
 package com.example.budgetapp.listeners.database;
 
-import java.util.List;
+import com.example.budgetapp.model.TranzactionModel;
 
-import model.TranzactionModel;
+import java.util.List;
 
 public interface DatabaseServiceTransactionListener {
 

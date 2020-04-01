@@ -1,4 +1,4 @@
-package com.example.budgetapp.home;
+package com.example.budgetapp.service;
 
 import android.os.Build;
 
@@ -6,6 +6,8 @@ import androidx.annotation.RequiresApi;
 
 import com.example.budgetapp.listeners.database.DatabaseCategoryFetchListener;
 import com.example.budgetapp.listeners.database.DatabaseServiceTransactionListener;
+import com.example.budgetapp.model.CategoryModel;
+import com.example.budgetapp.model.TranzactionModel;
 import com.google.common.collect.Lists;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -16,9 +18,6 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import model.CategoryModel;
-import model.TranzactionModel;
 
 import static java.util.Objects.isNull;
 

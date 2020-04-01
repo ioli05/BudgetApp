@@ -1,4 +1,4 @@
-package com.example.budgetapp.listeners;
+package com.example.budgetapp.listeners.category;
 
 public interface AddCategorySearchListener {
 

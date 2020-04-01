@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
-    tools:context=".home.TranzactionAdapter">
+    tools:context=".adapter.TranzactionAdapter">
 
     <LinearLayout
         android:layout_width="0dp"

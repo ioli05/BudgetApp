@@ -14,6 +14,11 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.budgetapp.R;
+import com.example.budgetapp.adapter.TranzactionAdapter;
+import com.example.budgetapp.model.CategoryModel;
+import com.example.budgetapp.model.TranzactionModel;
+import com.example.budgetapp.service.DatabaseService;
+import com.example.budgetapp.utils.CustomPieChartRenderer;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
@@ -32,9 +37,6 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import model.CategoryModel;
-import model.TranzactionModel;
 
 import static java.util.Objects.isNull;
 
@@ -303,9 +305,8 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
 
     }
 
-    //TODO Center info in ListView rows
-    //TODO Arrange pie info
     //TODO Set date if none is setted by user to current date (end date) - 1 month(start date)
     //TODO Add start date + end date to user db
+    //TODO Create Tabs 
       
 }
