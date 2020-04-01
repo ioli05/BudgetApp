@@ -3,6 +3,7 @@ package com.example.budgetapp.home;
 import android.app.DatePickerDialog;
 import android.database.DataSetObserver;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,12 +19,14 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -36,7 +39,7 @@ import model.TranzactionModel;
 import static java.util.Objects.isNull;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
-public class HomeActivity extends AppCompatActivity implements OnChartValueSelectedListener, ButtonClickNotify {
+public class HomeActivity extends AppCompatActivity implements OnChartValueSelectedListener {
 
     PieChart mPieChart;
     ListView mListView;
@@ -68,6 +71,7 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
+
 
         initializeFields();
         initializeListeners();
@@ -106,6 +110,10 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         mStartDateListener = (view, year, month, dayOfMonth) -> {
             String date = (month + 1) + "/" + dayOfMonth + "/" + year;
             mStartDate.setText(date);
+
+            this.mDatabaseService.fetchTransaction(
+                    mStartDate.getText().toString(),
+                    mEndDate.getText().toString());
         };
 
         mEndDate.setOnClickListener(v -> {
@@ -176,15 +184,41 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
 
         if (!isNull(this.mPieDataSet)) {
 
-            mPieDataSet.setColors(colors);
-
-            PieData mPieData = new PieData(mPieDataSet);
-
-            mPieChart.setData(mPieData);
-            mPieChart.invalidate();
+            mPieChart.setExtraOffsets(40f, 0f, 40f, 0f);
+            mPieChart.setRenderer(new CustomPieChartRenderer(mPieChart, 10f));
+            mPieChart.setOnChartValueSelectedListener(this);
             mPieChart.setHighlightPerTapEnabled(true);
 
-            mPieChart.setOnChartValueSelectedListener(this);
+            mPieDataSet.setValueLinePart1Length(0.6f);
+            mPieDataSet.setValueLinePart2Length(0.3f);
+            mPieDataSet.setValueLineWidth(2f);
+            mPieDataSet.setValueLinePart1OffsetPercentage(115f);  // Line starts outside of chart
+            mPieDataSet.setUsingSliceColorAsValueLineColor(true);
+
+            mPieDataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+            mPieDataSet.setValueTextSize(16f);
+            mPieDataSet.setValueTypeface(Typeface.MONOSPACE);
+            mPieDataSet.setColors(colors);
+            // Value formatting
+            mPieChart.setUsePercentValues(true);
+            mPieDataSet.setSelectionShift(3f);
+            mPieChart.setDrawHoleEnabled(true);
+            mPieChart.setHoleRadius(50f);
+            mPieChart.getLegend().setEnabled(false);
+            mPieChart.setData(new PieData(mPieDataSet));
+            mPieDataSet.setValueFormatter(new ValueFormatter() {
+                DecimalFormat df = new DecimalFormat("#.#");
+
+                @Override
+                public String getFormattedValue(float value) {
+                    return super.getFormattedValue(Float.valueOf(df.format(value))) + "%";
+                }
+            });
+
+            mPieChart.getDescription().setEnabled(false);
+            mPieChart.setEntryLabelColor(Color.parseColor("#424242"));
+            mPieChart.setEntryLabelTextSize(16f);
+            mPieChart.setEntryLabelTypeface(Typeface.MONOSPACE);
         }
     }
 
@@ -206,11 +240,17 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
 
     }
 
-
     private void initializeFields() {
         colors = new int[]{Color.BLACK, Color.CYAN, Color.GREEN, Color.MAGENTA};
 
+        colors = new int[]{Color.parseColor("#ffab91"), Color.parseColor("#fae3d9"),
+                Color.parseColor("#8ac6d1"), Color.parseColor("#a4d7e1"),
+                Color.parseColor("#fbd1b7"), Color.parseColor("#eda1ab")};
+
         mPieChart = findViewById(R.id.tranzactionPieChart);
+        mPieChart.setOnClickListener(v -> {
+            System.out.println("click");
+        });
         mListView = findViewById(R.id.tranzactionList);
 
         mCurrentUser = FirebaseAuth.getInstance().getCurrentUser();
@@ -236,6 +276,7 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         return mPieData;
     }
 
+    //Click on pie selection and get the transaction having the selected category
     @Override
     public void onValueSelected(Entry e, Highlight h) {
 
@@ -252,6 +293,7 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
         mTranzactionAdapter.notifyDataSetChanged();
     }
 
+    //Click outside the pie and get the entire list of transactions
     @Override
     public void onNothingSelected() {
 
@@ -261,8 +303,9 @@ public class HomeActivity extends AppCompatActivity implements OnChartValueSelec
 
     }
 
-    @Override
-    public void onButtonClick(int position) {
-
-    }
+    //TODO Center info in ListView rows
+    //TODO Arrange pie info
+    //TODO Set date if none is setted by user to current date (end date) - 1 month(start date)
+    //TODO Add start date + end date to user db
+      
 }

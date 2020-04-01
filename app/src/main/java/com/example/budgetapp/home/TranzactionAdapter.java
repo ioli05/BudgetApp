@@ -1,17 +1,16 @@
 package com.example.budgetapp.home;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.budgetapp.R;
+import com.example.budgetapp.utils.IconDrawable;
 import com.github.mikephil.charting.charts.PieChart;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -21,11 +20,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import model.CategoryModel;
+import model.SearchModel;
 import model.TranzactionModel;
 
 public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
 
     Activity context;
+
     List<Double> mTranzactionSum;
     List<String> mTranzactionName;
     List<String> mTranzactionCategory;
@@ -33,7 +34,6 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
     ArrayList<TranzactionModel> mTranzactionModelList;
     ArrayList<CategoryModel> mCategoryModelList;
     ArrayList<CategoryModel> mCategoryModelUserList;
-
 
     FirebaseFirestore mDb;
     FirebaseUser mCurrentUser;
@@ -64,22 +64,12 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
 
         TranzactionCategory.setOnClickListener(v -> {
 
-            List<String> categoryUserList = new ArrayList<>();
+            List<String> categoryUserList;
             categoryUserList = mCategoryModelUserList.stream().map(CategoryModel::getName).collect(Collectors.toList());
             categoryUserList.addAll(mCategoryModelList.stream().map(CategoryModel::getName).collect(Collectors.toList()));
 
-            String[] categories = categoryUserList.toArray(new String[0]);
+            showPopupEventTest(position, (ArrayList<String>) categoryUserList.stream().distinct().collect(Collectors.toList()));
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-            builder.setTitle("Pick a category");
-            builder.setItems(categories, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Log.d("TAG", "selected value" + categories[which]);
-                    updateTranzaction(position, categories[which]);
-                }
-            });
-            builder.show();
         });
 
         mTranzactionSum = new ArrayList<>();
@@ -98,6 +88,60 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
 
     }
 
+    private void showPopupEventTest(int tranzactionPosition, ArrayList<String> userList) {
+
+        ArrayList<SearchModel> sampleSearch = createSampleSearch(userList);
+        new ContactSearchDialogCompat<SearchModel>(context, "",
+                "What are you looking for...?", null, sampleSearch,
+                (dialog, item, position) -> {
+                    updateTranzaction(tranzactionPosition, item.getName());
+                    Toast.makeText(context, item.getTitle(),
+                            Toast.LENGTH_SHORT
+                    ).show();
+                    dialog.dismiss();
+                },
+                category -> checkCategoryOfStore(tranzactionPosition, category)
+        ).show();
+    }
+
+    private void checkCategoryOfStore(int tranzactionPosition, String category) {
+        String storeName = mTranzactionModelList.get(tranzactionPosition).getName();
+        //If there is no default specified category with this store
+        if (mCategoryModelList.stream().filter(categoryModel -> category.equals(categoryModel.getName()) && categoryModel.getStores().contains(storeName)).collect(Collectors.toList()).isEmpty()) {
+            if (mCategoryModelList.stream().filter(categoryModel -> category.equals(categoryModel.getName()) && categoryModel.getStores().contains(storeName)).collect(Collectors.toList()).isEmpty()) {
+                updateUserCategory(category, storeName);
+            }
+        }
+    }
+
+    private void updateUserCategory(String category, String storeName) {
+        List<String> stores = new ArrayList<>();
+        //Update extracted List
+        List<CategoryModel> filteredUserCategories = mCategoryModelUserList.stream().filter(categoryModel -> category.equals(categoryModel.getName())).collect(Collectors.toList());
+        if (!filteredUserCategories.isEmpty()) {
+            stores.addAll(filteredUserCategories.get(0).getStores());
+        }
+
+        stores.add(storeName);
+        CategoryModel categoryAdded = new CategoryModel("", stores, category);
+        mCategoryModelUserList.add(categoryAdded);
+
+        mDb.collection("users").document(mCurrentUser.getUid())
+                .collection("categories")
+                .document(category)
+                .set(categoryAdded);
+    }
+
+    private ArrayList<SearchModel> createSampleSearch(ArrayList<String> userList) {
+        ArrayList<SearchModel> customArrayList =
+                new ArrayList<>();
+        for (String category : userList
+        ) {
+            customArrayList.add(new SearchModel(category, IconDrawable.getIconForCategory(category)));
+        }
+        return customArrayList;
+    }
+
     private void updateTranzaction(int tranzactionPosition, String category) {
 
         //1.First, update tranzaction in list
@@ -107,7 +151,7 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
         //2.Second, update tranzaction in database
         mDb.collection("users").document(mCurrentUser.getUid())
                 .collection("tranzactions")
-                .document("tranzaction" + tranzactionPosition)
+                .document(updatedTranzaction.getDocumentId())
                 .update("category", category);
 
         //3.Refresh Listview and PieChart

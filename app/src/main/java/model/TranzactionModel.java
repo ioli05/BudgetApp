@@ -8,12 +8,14 @@ public class TranzactionModel {
     Double sum;
     String category;
     Date date;
+    String documentId;
 
-    public TranzactionModel(String name, Double sum, String category, Date date) {
+    public TranzactionModel(String name, Double sum, String category, Date date, String documentId) {
         this.name = name;
         this.sum = sum;
         this.category = category;
         this.date = date;
+        this.documentId = documentId;
     }
 
     public String getName() {
@@ -46,6 +48,14 @@ public class TranzactionModel {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+    public String getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
     }
 
 }

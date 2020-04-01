@@ -11,7 +11,6 @@
         android:theme="@style/AppTheme">
         <activity android:name=".home.TranzactionAdapter"/>
         <activity android:name=".home.HomeActivity" />
-        <activity android:name=".import.ImportActivity" />
         <activity android:name=".user.SignupActivity" />
         <activity android:name=".user.LoginActivity" >
             <intent-filter>

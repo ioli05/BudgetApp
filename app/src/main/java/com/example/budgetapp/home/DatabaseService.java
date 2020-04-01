@@ -65,7 +65,8 @@ public class DatabaseService {
                         List<TranzactionModel> transactionList = task.getResult().getDocuments().stream().map(document -> new TranzactionModel((String) document.get("name"),
                                 document.getDouble("sum"),
                                 (String) document.get("category"),
-                                document.getDate("date"))).collect(Collectors.toList());
+                                document.getDate("date"),
+                                document.getId())).collect(Collectors.toList());
 
                         List<TranzactionModel> filteredTranzactionList = Lists.newArrayList(transactionList);
 

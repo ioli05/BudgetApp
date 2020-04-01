@@ -11,8 +11,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.budgetapp.home.HomeActivity;
 import com.example.budgetapp.R;
+import com.example.budgetapp.home.HomeActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -38,6 +38,9 @@ public class LoginActivity extends AppCompatActivity {
         mSignupButton = findViewById(R.id.signupButton);
 
         db = FirebaseFirestore.getInstance();
+
+        mEmailUser.setText("alex@gmail.com");
+        mPasswordUser.setText("parola");
 
         mLoginButton.setOnClickListener(v -> {
 
@@ -77,7 +80,7 @@ public class LoginActivity extends AppCompatActivity {
 
         });
 
-
+        mLoginButton.performClick();
         mSignupButton.setOnClickListener(v -> startActivity(new Intent(getApplicationContext(), SignupActivity.class)));
     }
 }
