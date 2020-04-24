@@ -9,13 +9,15 @@ public class TranzactionModel {
     String category;
     Date date;
     String documentId;
+    String type;
 
-    public TranzactionModel(String name, Double sum, String category, Date date, String documentId) {
+    public TranzactionModel(String name, Double sum, String category, Date date, String documentId, String type) {
         this.name = name;
         this.sum = sum;
         this.category = category;
         this.date = date;
         this.documentId = documentId;
+        this.type = type;
     }
 
     public String getName() {
@@ -48,6 +50,15 @@ public class TranzactionModel {
 
     public void setDate(Date date) {
         this.date = date;
+    }
+
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getDocumentId() {

@@ -6,6 +6,25 @@
     android:layout_height="match_parent"
     tools:context=".home.HomeActivity">
 
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        android:background="@drawable/color1"
+        android:fitsSystemWindows="true"
+        app:itemIconTint="@drawable/nav_bar_selector"
+        app:itemTextColor="@drawable/nav_bar_selector"
+        app:labelVisibilityMode="labeled"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0"
+        app:layout_constraintWidth_percent="1"
+        app:menu="@menu/nav_tab">
+
+    </com.google.android.material.bottomnavigation.BottomNavigationView>
+
     <com.github.mikephil.charting.charts.PieChart
         android:id="@+id/tranzactionPieChart"
         android:layout_width="0dp"
@@ -20,6 +39,7 @@
 
     </com.github.mikephil.charting.charts.PieChart>
 
+
     <LinearLayout
         android:id="@+id/linearLayout2"
         android:layout_width="0dp"
@@ -28,18 +48,17 @@
         android:paddingTop="30dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.50"
+        app:layout_constraintHeight_percent="0.43"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintVertical_bias="0.884">
 
         <ListView
             android:id="@+id/tranzactionList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>
-
 
     <TextView
         android:id="@+id/startDate"
@@ -66,4 +85,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.595" />
+
+
 </androidx.constraintlayout.widget.ConstraintLayout>

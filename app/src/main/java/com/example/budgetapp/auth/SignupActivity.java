@@ -1,4 +1,4 @@
-package com.example.budgetapp.user;
+package com.example.budgetapp.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
