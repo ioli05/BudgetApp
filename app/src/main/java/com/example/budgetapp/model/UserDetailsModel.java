@@ -1,28 +1,24 @@
 package com.example.budgetapp.model;
 
 
+import java.util.Date;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserDetailsModel {
-    private String userName;
+
     private String userEmail;
+    private Date date;
+    private Integer age;
+    private boolean usageOfData;
+    private boolean isPremium;
+    private Date createdAt;
 
-    public UserDetailsModel(String userName, String userEmail) {
-        this.userName = userName;
-        this.userEmail = userEmail;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
 }

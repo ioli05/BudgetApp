@@ -1,6 +1,7 @@
 package com.example.budgetapp.adapter;
 
 import android.app.Activity;
+import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,10 +10,13 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.RequiresApi;
+
 import com.example.budgetapp.R;
 import com.example.budgetapp.model.CategoryModel;
 import com.example.budgetapp.model.SearchModel;
-import com.example.budgetapp.model.TranzactionModel;
+import com.example.budgetapp.model.TransactionModel;
+import com.example.budgetapp.service.DatabaseService;
 import com.example.budgetapp.utils.ContactSearchDialogCompat;
 import com.example.budgetapp.utils.IconDrawable;
 import com.github.mikephil.charting.charts.PieChart;
@@ -23,7 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
+@RequiresApi(api = Build.VERSION_CODES.O)
+public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
 
     Activity context;
 
@@ -31,25 +36,29 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
     List<String> mTranzactionName;
     List<String> mTranzactionCategory;
 
-    ArrayList<TranzactionModel> mTranzactionModelList;
+    ArrayList<TransactionModel> mTransactionModelList;
     ArrayList<CategoryModel> mCategoryModelList;
     ArrayList<CategoryModel> mCategoryModelUserList;
 
     FirebaseFirestore mDb;
     FirebaseUser mCurrentUser;
 
+    DatabaseService databaseService;
+
     PieChart mPieChart;
 
-    public TranzactionAdapter(Activity context, ArrayList<TranzactionModel> tranzactionList, FirebaseFirestore mDb,
+    public TranzactionAdapter(Activity context, ArrayList<TransactionModel> tranzactionList, FirebaseFirestore mDb,
                               FirebaseUser mCurrentUser, PieChart mPieChart) {
 
         super(context, R.layout.activity_tranzaction, tranzactionList);
 
         this.context = context;
-        this.mTranzactionModelList = tranzactionList;
+        this.mTransactionModelList = tranzactionList;
         this.mDb = mDb;
         this.mCurrentUser = mCurrentUser;
         this.mPieChart = mPieChart;
+
+        databaseService = DatabaseService.instance();
 
     }
 
@@ -76,9 +85,9 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
         mTranzactionName = new ArrayList<>();
         mTranzactionCategory = new ArrayList<>();
 
-        mTranzactionSum.addAll(mTranzactionModelList.stream().map(TranzactionModel::getSum).collect(Collectors.toList()));
-        mTranzactionName.addAll(mTranzactionModelList.stream().map(TranzactionModel::getName).collect(Collectors.toList()));
-        mTranzactionCategory.addAll(mTranzactionModelList.stream().map(TranzactionModel::getCategory).collect(Collectors.toList()));
+        mTranzactionSum.addAll(mTransactionModelList.stream().map(TransactionModel::getSum).collect(Collectors.toList()));
+        mTranzactionName.addAll(mTransactionModelList.stream().map(TransactionModel::getName).collect(Collectors.toList()));
+        mTranzactionCategory.addAll(mTransactionModelList.stream().map(TransactionModel::getCategory).collect(Collectors.toList()));
 
         TranzactionSum.setText(mTranzactionSum.get(position).toString());
         TranzactionName.setText(mTranzactionName.get(position));
@@ -91,24 +100,34 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
     private void showPopupEventTest(int tranzactionPosition, ArrayList<String> userList) {
 
         ArrayList<SearchModel> sampleSearch = createSampleSearch(userList);
-        new ContactSearchDialogCompat<SearchModel>(context, "",
+        new ContactSearchDialogCompat<>(context, "",
                 "What are you looking for...?", null, sampleSearch,
                 (dialog, item, position) -> {
                     updateTranzaction(tranzactionPosition, item.getName());
+                    checkCategoryOfStore(tranzactionPosition, item.getName());
                     Toast.makeText(context, item.getTitle(),
                             Toast.LENGTH_SHORT
                     ).show();
                     dialog.dismiss();
                 },
-                category -> checkCategoryOfStore(tranzactionPosition, category)
+                category -> {
+                    checkCategoryOfStore(tranzactionPosition, category);
+                }
+
         ).show();
     }
 
     private void checkCategoryOfStore(int tranzactionPosition, String category) {
-        String storeName = mTranzactionModelList.get(tranzactionPosition).getName();
+        String storeName = mTransactionModelList.get(tranzactionPosition).getName();
         //If there is no default specified category with this store
-        if (mCategoryModelList.stream().filter(categoryModel -> category.equals(categoryModel.getName()) && categoryModel.getStores().contains(storeName)).collect(Collectors.toList()).isEmpty()) {
-            if (mCategoryModelList.stream().filter(categoryModel -> category.equals(categoryModel.getName()) && categoryModel.getStores().contains(storeName)).collect(Collectors.toList()).isEmpty()) {
+        if (mCategoryModelUserList.stream().
+                filter(categoryModel -> category.equals(categoryModel.getName()) &&
+                        categoryModel.getStores().contains(storeName))
+                .collect(Collectors.toList()).isEmpty()) {
+            if (mCategoryModelList.stream()
+                    .filter(categoryModel -> category.equals(categoryModel.getName())
+                            && categoryModel.getStores().contains(storeName))
+                    .collect(Collectors.toList()).isEmpty()) {
                 updateUserCategory(category, storeName);
             }
         }
@@ -116,8 +135,12 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
 
     private void updateUserCategory(String category, String storeName) {
         List<String> stores = new ArrayList<>();
+
         //Update extracted List
-        List<CategoryModel> filteredUserCategories = mCategoryModelUserList.stream().filter(categoryModel -> category.equals(categoryModel.getName())).collect(Collectors.toList());
+        List<CategoryModel> filteredUserCategories = mCategoryModelUserList.stream()
+                .filter(categoryModel -> category.equals(categoryModel.getName()))
+                .collect(Collectors.toList());
+
         if (!filteredUserCategories.isEmpty()) {
             stores.addAll(filteredUserCategories.get(0).getStores());
         }
@@ -145,7 +168,7 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
     private void updateTranzaction(int tranzactionPosition, String category) {
 
         //1.First, update tranzaction in list
-        TranzactionModel updatedTranzaction = mTranzactionModelList.get(tranzactionPosition);
+        TransactionModel updatedTranzaction = mTransactionModelList.get(tranzactionPosition);
         updatedTranzaction.setCategory(category);
 
         //2.Second, update tranzaction in database
@@ -158,20 +181,11 @@ public class TranzactionAdapter extends ArrayAdapter<TranzactionModel> {
         this.notifyDataSetChanged();
     }
 
-    public ArrayList<CategoryModel> getmCategoryModelList() {
-        return mCategoryModelList;
+    public void setmCategoryModelList(ArrayList<CategoryModel> categoryModelList) {
+        this.mCategoryModelList = categoryModelList;
     }
 
-    public void setmCategoryModelList(ArrayList<CategoryModel> mCategoryModelList) {
-        this.mCategoryModelList = mCategoryModelList;
+    public void setmCategoryModelUserList(ArrayList<CategoryModel> categoryModelUserList) {
+        this.mCategoryModelUserList = categoryModelUserList;
     }
-
-    public ArrayList<CategoryModel> getmCategoryModelUserList() {
-        return mCategoryModelUserList;
-    }
-
-    public void setmCategoryModelUserList(ArrayList<CategoryModel> mCategoryModelUserList) {
-        this.mCategoryModelUserList = mCategoryModelUserList;
-    }
-
 }

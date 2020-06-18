@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.budgetapp.R;
 import com.example.budgetapp.tabset.MainActivity;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class LoginActivity extends AppCompatActivity {
@@ -31,47 +32,27 @@ public class LoginActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_login);
 
-        mEmailUser = findViewById(R.id.edittextEmail);
-        mPasswordUser = findViewById(R.id.registerPassword);
-        mProgressBar = findViewById(R.id.progressBar);
-        mFirebaseAuth = FirebaseAuth.getInstance();
-        mLoginButton = findViewById(R.id.loginButton);
-        mSignupButton = findViewById(R.id.signupButton);
+        initialiseFields();
 
-        db = FirebaseFirestore.getInstance();
-
-        mEmailUser.setText("alex@gmail.com");
-        mPasswordUser.setText("parola");
+        if (checkIfUserIsLogged()) {
+            goToMain();
+        }
 
         mLoginButton.setOnClickListener(v -> {
 
             String email = mEmailUser.getText().toString().trim();
             String password = mPasswordUser.getText().toString().trim();
 
-            if (TextUtils.isEmpty(email)) {
-                mEmailUser.setError("Email is Required.");
-                return;
-            }
-
-            if (TextUtils.isEmpty(password)) {
-                mPasswordUser.setError("Password is Required.");
-                return;
-            }
-
-            if (password.length() < 6) {
-                mPasswordUser.setError("Password Must be >= 6 Characters");
+            if (!validateFields(email, password)) {
                 return;
             }
 
             mProgressBar.setVisibility(View.VISIBLE);
 
-            // authenticate the user
-
             mFirebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-
                     Toast.makeText(LoginActivity.this, "Logged in Successfully", Toast.LENGTH_SHORT).show();
-                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    goToMain();
                 } else {
                     Toast.makeText(LoginActivity.this, "Error ! " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     mProgressBar.setVisibility(View.GONE);
@@ -81,7 +62,48 @@ public class LoginActivity extends AppCompatActivity {
 
         });
 
-        mLoginButton.performClick();
         mSignupButton.setOnClickListener(v -> startActivity(new Intent(getApplicationContext(), SignupActivity.class)));
+    }
+
+    private void goToMain() {
+        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+    }
+
+    private boolean checkIfUserIsLogged() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user != null) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean validateFields(String email, String password) {
+        if (TextUtils.isEmpty(email)) {
+            mEmailUser.setError("Email is Required.");
+            return false;
+        }
+
+        if (TextUtils.isEmpty(password)) {
+            mPasswordUser.setError("Password is Required.");
+            return false;
+        }
+
+        if (password.length() < 6) {
+            mPasswordUser.setError("Password Must be >= 6 Characters");
+            return false;
+        }
+        return true;
+    }
+
+    private void initialiseFields() {
+        mEmailUser = findViewById(R.id.edittextEmail);
+        mPasswordUser = findViewById(R.id.registerPassword);
+        mProgressBar = findViewById(R.id.progressBar);
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mLoginButton = findViewById(R.id.loginButton);
+        mSignupButton = findViewById(R.id.signupButton);
+
+        db = FirebaseFirestore.getInstance();
     }
 }
