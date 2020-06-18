@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation_main"
+    app:startDestination="@+id/navigation_home">
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.budgetapp.fragments.home.HomeFragment"
+        android:label="@string/home"
+        tools:layout="@layout/fragment_home" />
+    <fragment
+        android:id="@+id/navigation_import"
+        android:name="com.example.budgetapp.fragments.importt.ImportFragment"
+        android:label="@string/importvalue"
+        tools:layout="@layout/fragment_import"/>
+    <fragment
+        android:id="@+id/navigation_export"
+        android:name="com.example.budgetapp.fragments.export.ExportFragment"
+        android:label="@string/export"
+        tools:layout="@layout/fragment_export"
+        />
+    <fragment
+        android:id="@+id/navigation_budget"
+        android:name="com.example.budgetapp.fragments.budget.BudgetFragment"
+        android:label="@string/budget"
+        tools:layout="@layout/fragment_budget"/>
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.example.budgetapp.fragments.settings.SettingsFragment"
+        android:label="@string/settings"
+        tools:layout="@layout/fragment_export"/>
+
+</navigation>
