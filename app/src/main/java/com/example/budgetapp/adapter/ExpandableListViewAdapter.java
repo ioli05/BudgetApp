@@ -80,16 +80,39 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
         icon.setImageResource(group.getIcon());
         category.setText(group.getName());
-        budget.setText(group.getBudget() == 0.0 ?  "Set a budget" : group.getBudget().toString());
-
+        if (group.getBudget() != 0) {
+            Double sum = group.getBudget() + getSumForChildren(group.getName());
+            budget.setText(String.format("%s %s", sum.toString(), this.context.getString(R.string.currency)));
+            if (sum > 0) {
+                budget.setTextColor(Color.GREEN);
+            } else {
+                budget.setTextColor(Color.RED);
+            }
+        } else {
+            budget.setText(String.format("%s %s", getSumForChildren(group.getName()).toString(),
+                    this.context.getString(R.string.currency)));
+            budget.setTextColor(Color.GRAY);
+        }
         return convertView;
+    }
+
+    private Double getSumForChildren(String name) {
+        double categorysumPayment = listChild.get(name).stream()
+                .filter(tranzaction -> tranzaction.getCategory().equals(name))
+                .filter(tranzaction -> tranzaction.getType().equals("Payment"))
+                .map(TransactionModel::getSum).reduce(0.0, Double::sum);
+        double categorysumIncome = listChild.get(name).stream()
+                .filter(tranzaction -> tranzaction.getCategory().equals(name))
+                .filter(tranzaction -> tranzaction.getType().equals("Income"))
+                .map(TransactionModel::getSum).reduce(0.0, Double::sum);
+        return categorysumIncome - categorysumPayment;
     }
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
         TransactionModel transactionModel = (TransactionModel) getChild(groupPosition, childPosition);
 
-        if (convertView == null){
+        if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater) this.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = inflater.inflate(R.layout.item_category_row, null);
         }
@@ -103,13 +126,19 @@ public class ExpandableListViewAdapter extends BaseExpandableListAdapter {
 
 
         name.setText(transactionModel.getName());
-        sum.setText(transactionModel.getSum().toString());
+        String sign;
+        if (transactionModel.getType().equals("Income")) {
+            sign = "+";
+        } else {
+            sign = "-";
+        }
+        sum.setText(String.format("%s%s %s", sign, transactionModel.getSum().toString(),
+                this.context.getString(R.string.currency)));
         date.setText(simpleDateFormat.format(transactionModel.getDate()));
 
-        if ("Income".equals(transactionModel.getType())){
+        if ("Income".equals(transactionModel.getType())) {
             sum.setTextColor(Color.GREEN);
-        }
-        else {
+        } else {
             sum.setTextColor(Color.RED);
         }
 

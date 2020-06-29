@@ -5,54 +5,73 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:weightSum="3"
+
     tools:context=".adapter.TranzactionAdapter">
+
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="fill_parent"
-        android:layout_weight="1.75"
-        android:orientation="vertical"
-        android:paddingLeft="10dp">
+        android:layout_weight="1.70">
 
-        <TextView
-            android:id="@+id/TranzactionSum"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:layout_marginTop="5dp"
-            android:paddingLeft="10dp"
-            android:text="Medium Text"
-            android:textColor="#4d4d4d"
-            android:textStyle="bold"
-            android:typeface="monospace" />
+        <View
+            android:id="@+id/barcolor"
+            android:layout_width="10dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.2"
+            android:background="@android:color/darker_gray" />
 
-        <TextView
-            android:id="@+id/TranzactionName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:paddingLeft="10dp"
-            android:text="TextView"
-            android:typeface="monospace" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="85dp"
+            android:layout_weight="1.35"
+            android:layout_marginRight="5dp"
+            android:orientation="vertical"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/TranzactionSum"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="5dp"
+                android:paddingLeft="10dp"
+                android:text="Medium Text"
+                android:textColor="#4d4d4d"
+                android:textStyle="bold"
+                android:typeface="monospace" />
+
+            <TextView
+                android:id="@+id/TranzactionName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:paddingLeft="10dp"
+                android:text="TextView"
+                android:typeface="monospace" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="fill_parent"
-        android:layout_weight="1.25"
-        android:gravity="right"
-        android:padding="5dp">
+        android:layout_weight="1.35"
+        android:gravity="right|center_vertical"
+        android:layout_gravity="center_vertical|center_horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/TranzactionCategory"
             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="50dp"
             android:text="BUTTON"
             android:textSize="15dp"
+            android:layout_marginRight="10dp"
             app:icon="@drawable/cart_category"
             app:iconGravity="start"
+            android:textColor="#000000"
             app:iconSize="20dp" />
 
     </LinearLayout>

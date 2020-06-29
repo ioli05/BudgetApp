@@ -18,16 +18,20 @@ import com.example.budgetapp.model.UserDetailsModel;
 import com.google.common.collect.Lists;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -125,6 +129,7 @@ public class DatabaseService {
 
     public void fetchUserCategory() {
 
+        auth = FirebaseAuth.getInstance();
         mDb.collection("users").document(mCurrentUser.getUid())
                 .collection("categories")
                 .get()
@@ -221,11 +226,21 @@ public class DatabaseService {
             return; //category not default but store exists
         }
 
-        mDb.collection("users").document(mCurrentUser.getUid())
+        DocumentReference doc = mDb.collection("users").document(mCurrentUser.getUid())
                 .collection("categories")
-                .document(category)
-                .update("stores", FieldValue.arrayUnion(storeName));
-        return;
+                .document(category);
+
+        doc.get().addOnCompleteListener(task -> {
+            if (task.getResult().exists()) {
+                doc.update("stores", FieldValue.arrayUnion(storeName));
+                return;
+            } else {
+                doc.set(new CategoryModel("", new ArrayList<>(Arrays.asList(storeName)),
+                        category));
+                return;
+            }
+        });
+
     }
 
     public void addAllTranzactions(List<TransactionModel> tranzactions) {
@@ -310,7 +325,7 @@ public class DatabaseService {
 
     public void updateData(boolean value) {
         mDb.collection("users").document(mCurrentUser.getUid())
-                .update("useData", value);
+                .update("usageOfData", value);
     }
 
     public void deleteData() {
@@ -399,5 +414,33 @@ public class DatabaseService {
 
     public void setFetchUserDetailsListener(FetchUserDetailsListener listener) {
         this.fetchUserDetailsListener = listener;
+    }
+
+    public void addCategory(String category, CategoryModel categoryAdded) {
+
+        categoryUserList.add(categoryAdded);
+
+        mDb.collection("users").document(mCurrentUser.getUid())
+                .collection("categories")
+                .document(category)
+                .set(categoryAdded);
+    }
+
+    public void emptyBudget() {
+
+        mDb.collection("users").document(mCurrentUser.getUid())
+                .collection("budget")
+                .get()
+                .addOnCompleteListener(task -> {
+                    for (QueryDocumentSnapshot document : Objects.requireNonNull(task.getResult())) {
+                        mDb.collection("users").document(mCurrentUser.getUid()).
+                                collection("budget").document(document.getId()).delete();
+                    }
+                });
+    }
+
+    public void upgradePremium() {
+        mDb.collection("users").document(mCurrentUser.getUid())
+                .update("isPremium", true);
     }
 }

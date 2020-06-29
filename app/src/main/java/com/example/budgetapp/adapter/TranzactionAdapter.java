@@ -1,12 +1,13 @@
 package com.example.budgetapp.adapter;
 
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,11 +21,15 @@ import com.example.budgetapp.service.DatabaseService;
 import com.example.budgetapp.utils.ContactSearchDialogCompat;
 import com.example.budgetapp.utils.IconDrawable;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieEntry;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -42,6 +47,8 @@ public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
 
     FirebaseFirestore mDb;
     FirebaseUser mCurrentUser;
+
+    Map<String, String> colorForCategory = new HashMap<>();
 
     DatabaseService databaseService;
 
@@ -69,8 +76,8 @@ public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
 
         TextView TranzactionSum = rowView.findViewById(R.id.TranzactionSum);
         TextView TranzactionName = rowView.findViewById(R.id.TranzactionName);
-        Button TranzactionCategory = rowView.findViewById(R.id.TranzactionCategory);
-
+        MaterialButton TranzactionCategory = rowView.findViewById(R.id.TranzactionCategory);
+        View TranzactionViewColor = rowView.findViewById(R.id.barcolor);
         TranzactionCategory.setOnClickListener(v -> {
 
             List<String> categoryUserList;
@@ -89,10 +96,18 @@ public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
         mTranzactionName.addAll(mTransactionModelList.stream().map(TransactionModel::getName).collect(Collectors.toList()));
         mTranzactionCategory.addAll(mTransactionModelList.stream().map(TransactionModel::getCategory).collect(Collectors.toList()));
 
-        TranzactionSum.setText(mTranzactionSum.get(position).toString());
+        TranzactionSum.setText(String.format("%s %s", mTranzactionSum.get(position).toString(),
+                this.context.getString(R.string.currency)));
         TranzactionName.setText(mTranzactionName.get(position));
         TranzactionCategory.setText(mTranzactionCategory.get(position));
+        TranzactionViewColor.setBackgroundColor(Color.parseColor(colorForCategory.get(mTranzactionCategory
+                .get(position))));
 
+        TranzactionCategory.setIcon(context.getResources()
+                .getDrawable(IconDrawable.getIconForCategory(mTranzactionCategory.get(position))));
+        TranzactionCategory.setIconTint(ColorStateList
+                .valueOf(Color.parseColor(colorForCategory.get(mTranzactionCategory
+                        .get(position)))));
         return rowView;
 
     }
@@ -149,10 +164,8 @@ public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
         CategoryModel categoryAdded = new CategoryModel("", stores, category);
         mCategoryModelUserList.add(categoryAdded);
 
-        mDb.collection("users").document(mCurrentUser.getUid())
-                .collection("categories")
-                .document(category)
-                .set(categoryAdded);
+        databaseService.addCategory(category, categoryAdded);
+
     }
 
     private ArrayList<SearchModel> createSampleSearch(ArrayList<String> userList) {
@@ -187,5 +200,18 @@ public class TranzactionAdapter extends ArrayAdapter<TransactionModel> {
 
     public void setmCategoryModelUserList(ArrayList<CategoryModel> categoryModelUserList) {
         this.mCategoryModelUserList = categoryModelUserList;
+    }
+
+    public void setColorsForEntries(int[] colors, ArrayList<PieEntry> mPieData) {
+        colorForCategory.clear();
+        for (int i = 0; i < mPieData.size(); i++) {
+            Color c = Color.valueOf(colors[i % colors.length]);
+            String hex = Integer.toHexString(c.toArgb() & 0xffffff);
+            if (hex.length() < 6) {
+                hex = "0" + hex;
+            }
+            hex = "#" + hex;
+            colorForCategory.put(mPieData.get(i).getLabel(), hex);
+        }
     }
 }

@@ -7,17 +7,17 @@ import android.graphics.Typeface;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ListView;
-import android.widget.TextView;
 
 import com.example.budgetapp.R;
 import com.example.budgetapp.adapter.TranzactionAdapter;
@@ -25,7 +25,6 @@ import com.example.budgetapp.model.CategoryModel;
 import com.example.budgetapp.model.TransactionModel;
 import com.example.budgetapp.service.DatabaseService;
 import com.example.budgetapp.utils.CustomPieChartRenderer;
-import com.example.budgetapp.utils.IconDrawable;
 import com.example.budgetapp.utils.PieChartColor;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.Entry;
@@ -58,6 +57,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
 
     PieChart mPieChart;
     ListView mListView;
+    ProgressBar progressBar;
 
     FirebaseUser mCurrentUser;
     FirebaseFirestore db;
@@ -101,6 +101,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
 
     private void fetchData() {
         mDatabaseService.refreshCurrentUser();
+
         mDatabaseService.fetchTransaction(mStartDate.getText().toString(),
                 mEndDate.getText().toString());
 
@@ -220,6 +221,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
 
     private void addToPieChart() {
 
+//        progressBar.setVisibility(View.VISIBLE);
         if (!isNull(this.mPieDataSet)) {
 
             mPieChart.setExtraOffsets(40f, 0f, 40f, 0f);
@@ -261,6 +263,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
             mPieChart.setEntryLabelColor(0 );
             mPieChart.setEntryLabelTypeface(Typeface.MONOSPACE);
             mPieChart.getData().getColors();
+//            progressBar.setVisibility(View.GONE);
         }
     }
 
@@ -297,6 +300,8 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
         mStartDate = this.getView().findViewById(R.id.startDate);
         mEndDate = this.getView().findViewById(R.id.endDate);
 
+        progressBar = this.getView().findViewById(R.id.homeBar);
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/YYYY");
 
         mEndDate.setText(formatter.format(LocalDate.now()));
@@ -320,6 +325,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
 
             mPieData.add(new PieEntry(sum, current));
         }
+        mTranzactionAdapter.setColorsForEntries(colors, mPieData);
         return mPieData;
     }
 

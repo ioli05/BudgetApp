@@ -1,24 +1,24 @@
 package com.example.budgetapp.fragments.budget;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
+import android.widget.ExpandableListView;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
-
-import android.text.InputType;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.ExpandableListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.example.budgetapp.R;
 import com.example.budgetapp.adapter.ExpandableListViewAdapter;
@@ -29,36 +29,24 @@ import com.example.budgetapp.model.ExpandableModel;
 import com.example.budgetapp.model.TransactionModel;
 import com.example.budgetapp.model.UserDetailsModel;
 import com.example.budgetapp.service.DatabaseService;
-import com.example.budgetapp.utils.CustomPieChartRenderer;
 import com.example.budgetapp.utils.IconDrawable;
 import com.example.budgetapp.utils.PieChartColor;
-import com.github.mikephil.charting.charts.PieChart;
-import com.github.mikephil.charting.data.Entry;
-import com.github.mikephil.charting.data.PieData;
-import com.github.mikephil.charting.data.PieDataSet;
-import com.github.mikephil.charting.data.PieEntry;
-import com.github.mikephil.charting.formatter.ValueFormatter;
-import com.github.mikephil.charting.highlight.Highlight;
-import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
-
-import static java.util.Objects.isNull;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 
@@ -66,6 +54,7 @@ public class BudgetFragment extends Fragment {
 
     FirebaseUser mCurrentUser;
     FirebaseFirestore db;
+
 
     DatabaseService mDatabaseService;
 
@@ -84,6 +73,7 @@ public class BudgetFragment extends Fragment {
 
 
     TextView mStartDate, mEndDate;
+    FloatingActionButton button;
 
     List<ExpandableModel> listGroup;
     HashMap<String, List<TransactionModel>> listChild = new HashMap<>();
@@ -112,35 +102,29 @@ public class BudgetFragment extends Fragment {
 
     private void initExpandableData() {
 
-        List<String> categories;
-
-        categories = mTransactionModelList.stream().map(TransactionModel::getCategory).distinct()
-                .collect(Collectors.toList());
-
-        for (String category : categories) {
-            listGroup.add(getExpandableForCategory(category));
-        }
-
+        listGroup.addAll(getExpandableList());
 
         for (ExpandableModel current : listGroup) {
-            listChild.put(current.getName(), mTransactionModelList.stream()
-                    .filter(tranzaction -> tranzaction.getCategory().equals(current.getName()))
-                    .collect(Collectors.toList()));
+            updateChildList(current);
         }
 
         expandableListViewAdapter.notifyDataSetChanged();
     }
 
-    private ExpandableModel getExpandableForCategory(String category) {
-        BudgetModel budgetModel= budgetModelList.stream().filter(budget -> budget.getName()
-                .equals(category)).findAny().orElse(null);
+    private void updateChildList(ExpandableModel current) {
+        listChild.put(current.getName(), mTransactionModelList.stream()
+                .filter(tranzaction -> tranzaction.getCategory().equals(current.getName()))
+                .collect(Collectors.toList()));
+    }
 
-        if (!isNull(budgetModel)) {
-            return new ExpandableModel(category, IconDrawable.getIconForCategory(category),
-                    budgetModel.getBudget());
+    private List<ExpandableModel> getExpandableList() {
+        List<ExpandableModel> list = new ArrayList<>();
+
+        for (BudgetModel b : budgetModelList) {
+            list.add(new ExpandableModel(b.getName(), IconDrawable.getIconForCategory(b.getName()),
+                    b.getBudget()));
         }
-
-        return new ExpandableModel(category, IconDrawable.getIconForCategory(category), 0.0);
+        return list;
     }
 
     private void addToExpandableListView() {
@@ -181,25 +165,20 @@ public class BudgetFragment extends Fragment {
             if (isUserCustomCategories) {
                 this.mCategoryListUser.clear();
                 this.mCategoryListUser.addAll(categoriesList);
-            }
-            else {
+            } else {
                 this.mCategoryList.clear();
                 this.mCategoryList.addAll(categoriesList);
             }
             addToExpandableListView();
         });
 
-        this.mDatabaseService.setDatabaseBudgetListener((budgetList) -> {
-            refreshData(budgetList);
-        });
+        this.mDatabaseService.setDatabaseBudgetListener(this::refreshData);
 
         expandableListView.setOnGroupClickListener((parent, v, groupPosition, id) -> {
-            Toast.makeText(getActivity(), "Group Clicked " + listGroup.get(groupPosition), Toast.LENGTH_SHORT).show();
             if (expandableListView.isGroupExpanded(groupPosition)) {
                 expandableListView.collapseGroup(groupPosition);
                 previousGroup = -1;
-            }
-            else {
+            } else {
                 expandableListView.expandGroup(groupPosition);
                 if (previousGroup != -1){
                     expandableListView.collapseGroup(previousGroup);
@@ -208,22 +187,12 @@ public class BudgetFragment extends Fragment {
             }
             return true;
         });
-        expandableListView.setOnGroupExpandListener(groupPosition -> Toast.makeText(getActivity(),
-                listGroup.get(groupPosition) + " Expanded", Toast.LENGTH_SHORT).show());
-        expandableListView.setOnGroupCollapseListener(groupPosition -> Toast.makeText(getActivity(),
-                listGroup.get(groupPosition) + " Collapsed", Toast.LENGTH_SHORT).show());
-        expandableListView.setOnChildClickListener((parent, v, groupPosition, childPosition, id) -> {
-            Toast.makeText(getActivity(), listGroup.get(groupPosition) + " : " + listChild.get( listGroup.get(groupPosition)).get( childPosition), Toast.LENGTH_SHORT) .show();
-            return false;
-        });
         expandableListView.setOnItemLongClickListener((parent, view, position, id) -> {
 
             long packedPosition = expandableListView.getExpandableListPosition(position);
 
             int itemType = ExpandableListView.getPackedPositionType(packedPosition);
             int groupPosition = ExpandableListView.getPackedPositionGroup(packedPosition);
-            int childPosition = ExpandableListView.getPackedPositionChild(packedPosition);
-
 
             /*  if group item clicked */
             if (itemType == ExpandableListView.PACKED_POSITION_TYPE_GROUP) {
@@ -234,6 +203,50 @@ public class BudgetFragment extends Fragment {
             return false;
         });
 
+        button.setOnClickListener(v -> {
+            openChooseCategoryDialog();
+        });
+
+    }
+
+    private void openChooseCategoryDialog() {
+
+        Dialog dialog = new Dialog(this.getContext());
+        dialog.setContentView(R.layout.dialog_categorylist);
+
+        String[] categories = mDatabaseService.getCategories().toArray(new String[0]);
+        ListView lv = dialog.findViewById(R.id.cat_list);
+        ArrayAdapter<String> mAdapter = new ArrayAdapter<String>(this.getContext(),
+                android.R.layout.simple_list_item_1,
+                mDatabaseService.getCategories().toArray(new String[0])) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                // Cast the list view each item as text view
+                TextView item = (TextView) super.getView(position, convertView, parent);
+
+                // Set the typeface/font for the current item
+                item.setTypeface(Typeface.MONOSPACE);
+
+                // return the view
+                return item;
+            }
+        };
+
+        lv.setAdapter(mAdapter);
+        lv.setOnItemClickListener((parent, view, position, id) -> {
+            mDatabaseService.updateBudget(categories[position], 0.0);
+            ExpandableModel e = new ExpandableModel(categories[position],
+                    IconDrawable.getIconForCategory(categories[position]),
+                    0.0);
+            listGroup.add(e);
+            updateChildList(e);
+            expandableListViewAdapter.notifyDataSetChanged();
+            dialog.cancel();
+
+        });
+        dialog.setCancelable(true);
+        dialog.show();
+
     }
 
     private void checkIfToReset() {
@@ -243,6 +256,7 @@ public class BudgetFragment extends Fragment {
             //if is the same date as the createdAt => continue
             if (!user.getCreatedAt().equals(user.getDate())) {
                 addToAnalytics();
+                mDatabaseService.emptyBudget();
             }
         }
         setDate();
@@ -273,11 +287,13 @@ public class BudgetFragment extends Fragment {
 
     private void setDate() {
         int day = refreshDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
-        if (day > 30) {
-            day = 30;
-        }
 
         LocalDate currentDate = LocalDate.now();
+
+        if (day > currentDate.lengthOfMonth()) {
+            day = currentDate.lengthOfMonth();
+        }
+
         LocalDate localDate = LocalDate.of(currentDate.getYear(), currentDate.getMonth().getValue(),
                 currentDate.getDayOfMonth());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
@@ -291,22 +307,19 @@ public class BudgetFragment extends Fragment {
     }
 
     private void onGroupLongClick(int groupPosition) {
+
+        EditText text = new EditText(this.getContext());
+        text.setSingleLine();
+
         AlertDialog.Builder alert = new AlertDialog.Builder(this.getContext());
-        alert.setTitle("Budget");
-        alert.setMessage("Set a budget :");
-
-        // Set an EditText view to get user input
-        final EditText input = new EditText(this.getContext());
-        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-        input.setInputType(InputType.TYPE_CLASS_NUMBER);
-        alert.setView(input);
-
+        alert.setTitle("Set a budget:");
+        alert.setView(text);
         alert.setPositiveButton("Ok", (dialog, whichButton) -> {
-            Double value = Double.parseDouble(input.getText().toString());
-            Log.d("", "Pin Value : " + value);
-
-            updateBudget(listGroup.get(groupPosition), value);
-
+            if (!text.getText().toString().equals("")) {
+                Double value = Double.parseDouble(text.getText().toString());
+                Log.d("", "Pin Value : " + value);
+                updateBudget(listGroup.get(groupPosition), value);
+            }
             return;
         });
 
@@ -324,7 +337,7 @@ public class BudgetFragment extends Fragment {
         }
         //2. Update listGroup budget
         listGroup.stream().filter(element -> element.equals(expandableModel)).forEach(model -> model.setBudget(value));
-
+        expandableListViewAdapter.notifyDataSetChanged();
         //3. Update Database
         mDatabaseService.updateBudget(expandableModel.getName(), value);
     }
@@ -359,6 +372,7 @@ public class BudgetFragment extends Fragment {
         refreshDate = new Date();
         mStartDate = this.getView().findViewById(R.id.startDate);
         mEndDate = this.getView().findViewById(R.id.endDate);
+        button = this.getView().findViewById(R.id.fab);
 
     }
 }

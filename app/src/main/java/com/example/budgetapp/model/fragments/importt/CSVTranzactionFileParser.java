@@ -42,9 +42,14 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
     List<CategoryModel> userCategoryModelList = new ArrayList<>();
     List<CategoryModel> defaultCategoryModelList = new ArrayList<>();
 
+    List<String[]> lines = new ArrayList<>();
+    boolean gotCategoriesUser = false;
+    boolean gotCategoriesDefault = false;
+
     public CSVTranzactionFileParser() {
 
         transactionModelList = new ArrayList<>();
+
         mDatabaseService = DatabaseService.instance();
 
         mDatabaseService.fetchDefaultCategories();
@@ -53,12 +58,18 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
 
         this.mDatabaseService.setDatabaseCategoryFetchListener((categoriesList, isUserCustomCategories) -> {
 
+
             if (isUserCustomCategories) {
+                gotCategoriesUser = true;
                 this.userCategoryModelList.clear();
                 this.userCategoryModelList.addAll(categoriesList);
             } else {
+                gotCategoriesDefault = true;
                 this.defaultCategoryModelList.clear();
                 this.defaultCategoryModelList.addAll(categoriesList);
+            }
+            if (gotCategoriesUser && gotCategoriesDefault) {
+                mDatabaseService.addAllTranzactions(parseTranzactions(lines));
             }
         });
     }
@@ -66,7 +77,6 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
     @Override
     public void parseFile(InputStream inputStream) {
 
-        List<String[]> lines = new ArrayList<>();
         try {
             CSVReader reader = new CSVReader(new InputStreamReader(inputStream));
             for (; ; ) {
@@ -77,7 +87,9 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
                     break;
                 }
             }
-            mDatabaseService.addAllTranzactions(parseTranzactions(lines));
+            if (gotCategoriesUser && gotCategoriesDefault) {
+                mDatabaseService.addAllTranzactions(parseTranzactions(lines));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -123,21 +135,28 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
         String category = getCategoryModel(name);
 
         transactionModel = new TransactionModel(name, sum, category, date, "", type);
-        System.out.println("Tranzaction" + name + " " + sum + " " + category + " " + date + " " + type);
+
         return transactionModel;
     }
 
     private String getCategoryModel(String name) {
-//        userCategoryModelList.stream().map(CategoryModel::getStores).forEach(store -> name.contains(store));
-//        if (userCategoryModelList.stream().anyMatch(store -> name.contains(store.getStores()))){
-//            return userCategoryModelList.stream().map(CategoryModel::getStores).filter(store -> store.contains(name)).collect(Collectors.toList()).get(0).toString();
-//        }
-//        if (defaultCategoryModelList.stream().anyMatch(store -> store.getStores().contains(name))){
-//            return defaultCategoryModelList.stream().map(CategoryModel::getStores).filter(store -> store.contains(name)).collect(Collectors.toList()).get(0).toString();
-//        }
-//        else {
-            return "UNKNOWN";
-        //}
+
+        for (int i = 0; i < userCategoryModelList.size(); i++) {
+            for (int j = 0; j < userCategoryModelList.get(i).getStores().size(); j++) {
+                if (name.toLowerCase().contains(userCategoryModelList.get(i).getStores().get(j).toLowerCase())) {
+                    return userCategoryModelList.get(i).getName();
+                }
+            }
+        }
+
+        for (int i = 0; i < defaultCategoryModelList.size(); i++) {
+            for (int j = 0; j < defaultCategoryModelList.get(i).getStores().size(); j++) {
+                if (name.toLowerCase().contains(defaultCategoryModelList.get(i).getStores().get(j).toLowerCase())) {
+                    return defaultCategoryModelList.get(i).getName();
+                }
+            }
+        }
+        return "UNKNOWN";
     }
 
     //get details row

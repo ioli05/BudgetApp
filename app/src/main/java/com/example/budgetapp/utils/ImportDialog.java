@@ -2,16 +2,20 @@ package com.example.budgetapp.utils;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatDialogFragment;
@@ -45,6 +49,7 @@ public class ImportDialog extends AppCompatDialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext(), R.style.my_dialog);
 
         LayoutInflater inflater = getActivity().getLayoutInflater();
+
         View view = inflater.inflate(R.layout.import_manually, null);
 
         builder.setView(view)
@@ -151,19 +156,50 @@ public class ImportDialog extends AppCompatDialogFragment {
         type = view.findViewById(R.id.type_spinner);
         spinner = view.findViewById(R.id.spinner_category);
 
+        new DateInputMask(date);
         categoryList = new ArrayList<>();
 
         categoryAdapter = new CategoryAdapter(this.getContext(), categoryList);
-        spinner.setAdapter(categoryAdapter);
 
+        spinner.setAdapter(categoryAdapter);
+        String[] typeString = new String[]{"Payment", "Income", "Transaction type"};
         // Create an ArrayAdapter using the string array and a default spinner layout
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this.getContext(),
-                R.array.type_array, android.R.layout.simple_spinner_item);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this.getContext(),
+                android.R.layout.simple_spinner_item, typeString) {
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View v = super.getView(position, convertView, parent);
+
+                Typeface externalFont = Typeface.MONOSPACE;
+                ((TextView) v).setTypeface(externalFont);
+                ((TextView) v).setTextColor(Color.GRAY);
+                ((TextView) v).setTextSize(20);
+
+                return v;
+            }
+
+            public View getDropDownView(int position, View convertView, ViewGroup parent) {
+                View v = super.getDropDownView(position, convertView, parent);
+
+                Typeface externalFont = Typeface.MONOSPACE;
+                ((TextView) v).setTypeface(externalFont);
+                ((TextView) v).setTextColor(Color.GRAY);
+                ((TextView) v).setTextSize(20);
+
+                return v;
+            }
+
+            @Override
+            public int getCount() {
+                // to show hint "Select Gender" and don't able to select
+                return typeString.length - 1;
+            }
+        };
         // Specify the layout to use when the list of choices appears
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         // Apply the adapter to the spinner
         type.setAdapter(adapter);
-
+        type.setSelection(typeString.length - 1);
         save = view.findViewById(R.id.save_import);
         cancel = view.findViewById(R.id.cancel_import);
     }

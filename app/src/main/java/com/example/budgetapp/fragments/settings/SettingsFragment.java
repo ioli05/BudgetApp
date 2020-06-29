@@ -3,21 +3,16 @@ package com.example.budgetapp.fragments.settings;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.Switch;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProviders;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.Switch;
-import android.widget.TextView;
 
 import com.example.budgetapp.R;
 import com.example.budgetapp.auth.LoginActivity;
@@ -26,6 +21,7 @@ import com.example.budgetapp.dialog.ChangePasswordDialog;
 import com.example.budgetapp.dialog.DeleteAccountDialog;
 import com.example.budgetapp.dialog.DeleteDataDialog;
 import com.example.budgetapp.service.DatabaseService;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class SettingsFragment extends Fragment {
@@ -78,12 +74,18 @@ public class SettingsFragment extends Fragment {
         useData.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 databaseService.updateData(true);
-            }
-            else {
+            } else {
                 databaseService.updateData(false);
             }
         });
 
+        upgradePremium.setOnClickListener(view -> {
+            databaseService.upgradePremium();
+            View inflatedView = getLayoutInflater().inflate(R.layout.activity_main, null);
+
+            BottomNavigationView navView = inflatedView.findViewById(R.id.nav_view);
+            navView.getMenu().getItem(1).setEnabled(true);
+        });
         deleteAccount.setOnClickListener(view -> {
             openDeleteAcoountDialog();
         });

@@ -2,6 +2,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.firebase-perf'
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -93,6 +95,7 @@ dependencies {
 
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
     implementation 'com.teaanddogdog:mpandroidchartutil:1.0.3'
+    implementation 'com.google.firebase:firebase-perf:19.0.7'
 }
 repositories {
     mavenCentral()

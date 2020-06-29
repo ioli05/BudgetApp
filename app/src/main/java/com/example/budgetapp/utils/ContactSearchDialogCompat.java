@@ -14,6 +14,7 @@ import androidx.annotation.Nullable;
 import com.example.budgetapp.R;
 import com.example.budgetapp.adapter.ContactModelAdapter;
 import com.example.budgetapp.listeners.category.AddCategorySearchListener;
+import com.example.budgetapp.model.SearchModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,6 @@ import ir.mirrajabi.searchdialog.SimpleSearchFilter;
 import ir.mirrajabi.searchdialog.core.BaseSearchDialogCompat;
 import ir.mirrajabi.searchdialog.core.SearchResultListener;
 import ir.mirrajabi.searchdialog.core.Searchable;
-import com.example.budgetapp.model.SearchModel;
 
 
 public class ContactSearchDialogCompat<T extends Searchable> extends BaseSearchDialogCompat<T> {
