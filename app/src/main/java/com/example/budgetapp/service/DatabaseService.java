@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi;
 
 import com.example.budgetapp.listeners.analytics.DatabaseAnalyticsListener;
 import com.example.budgetapp.listeners.analytics.FetchUserDetailsListener;
+import com.example.budgetapp.listeners.database.DatabaseAnalyticsAgeListener;
 import com.example.budgetapp.listeners.database.DatabaseBudgetListener;
 import com.example.budgetapp.listeners.database.DatabaseCategoryFetchListener;
 import com.example.budgetapp.listeners.database.DatabaseServiceTransactionListener;
@@ -29,8 +30,10 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,7 +50,7 @@ public class DatabaseService {
 
     private List<CategoryModel> categoryUserList = new ArrayList<>();
     private List<CategoryModel> categoryList = new ArrayList<>();
-
+    private Map<String, Long> map = new HashMap<>();
     private DatabaseServiceTransactionListener databaseServiceTransactionListener;
 
     private DatabaseCategoryFetchListener databaseCategoryFetchListener;
@@ -60,7 +63,10 @@ public class DatabaseService {
 
     private FetchUserDetailsListener fetchUserDetailsListener;
 
+    private DatabaseAnalyticsAgeListener databaseAnalyticsAgeListener;
+
     private static DatabaseService databaseService = null;
+
 
     public static DatabaseService instance() {
         if (isNull(databaseService)) {
@@ -165,28 +171,28 @@ public class DatabaseService {
                 });
     }
 
-    public void fetchAnalytics(String category) {
+    public void fetchAnalytics() {
 
         mDb.collection("users").document(mCurrentUser.getUid())
                 .collection("analytics")
-                .document(category)
                 .get()
                 .addOnCompleteListener(task -> {
+                    Map<String, List<AnalyticModel>> map = new HashMap<>();
                     if (task.isSuccessful()) {
-                        DocumentSnapshot document = task.getResult();
-                        if (document.exists()) {
-                            List<String> dates = (List<String>) task.getResult().get("dates");
-                            List<Number> values = (List<Number>) task.getResult().get("values");
+                        for (DocumentSnapshot d : task.getResult().getDocuments()) {
+                            List<String> dates = (List<String>) d.get("dates");
+                            List<Number> values = (List<Number>) d.get("values");
                             List<AnalyticModel> analyticModelList = new ArrayList<>();
+
                             for (int i = 0; i < dates.size(); i++) {
-                                analyticModelList.add(new AnalyticModel(document.getId(),
+                                analyticModelList.add(new AnalyticModel(d.getId(),
                                         values.get(i).doubleValue(), dates.get(i)));
                             }
-
-                            if (!isNull(this.databaseAnalyticsListener)) {
-                                this.databaseAnalyticsListener.onAnalyticsFetched(analyticModelList);
-                            }
+                            map.put(d.getId(), analyticModelList);
                         }
+                        if (!isNull(this.databaseAnalyticsListener)) {
+                            this.databaseAnalyticsListener.onAnalyticsFetched(map);
+                            }
                     }
                 });
     }
@@ -208,9 +214,6 @@ public class DatabaseService {
                 .document(category)
                 .set(new BudgetModel(budget, category));
 
-    }
-
-    public void updateTranzactionCategory() {
     }
 
     public void updateCategoryManual(String storeName, String category) {
@@ -416,6 +419,10 @@ public class DatabaseService {
         this.fetchUserDetailsListener = listener;
     }
 
+    public void setDatabaseAnalyticsAgeListener(DatabaseAnalyticsAgeListener listener) {
+        this.databaseAnalyticsAgeListener = listener;
+    }
+
     public void addCategory(String category, CategoryModel categoryAdded) {
 
         categoryUserList.add(categoryAdded);
@@ -441,6 +448,65 @@ public class DatabaseService {
 
     public void upgradePremium() {
         mDb.collection("users").document(mCurrentUser.getUid())
-                .update("isPremium", true);
+                .update("premium", true);
+    }
+
+    public void fetchAgeAverage(Integer age) {
+        mDb.collection("age")
+                .document(age.toString())
+                .collection("categories")
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        Map<String, Long> ages = new HashMap<>();
+                        for (DocumentSnapshot d : task.getResult().getDocuments()) {
+
+                            ages.put(d.get("category").toString(), d.getLong("average"));
+                        }
+
+                        map = ages;
+
+                        if (!isNull(databaseAnalyticsAgeListener)) {
+                            databaseAnalyticsAgeListener.fetchAnalytics(ages);
+                        }
+                    }
+                });
+    }
+
+    public void addToAge(List<AnalyticModel> list, Integer age) {
+        for (AnalyticModel a : list) {
+            Long value = a.getSpent().longValue();
+            Long x = map.get(a.getName());
+
+
+            value += x;
+            value = value / 2;
+
+            Long finalValue = value;
+            mDb.collection("age")
+                    .document(age.toString())
+                    .collection("categories")
+                    .document(a.getName())
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.getResult().exists()) {
+                            mDb.collection("age")
+                                    .document(age.toString())
+                                    .collection("categories")
+                                    .document(a.getName())
+                                    .update("average", finalValue);
+                        } else {
+                            HashMap<String, Object> hash = new HashMap<>();
+                            hash.put("average", finalValue);
+                            hash.put("category", a.getName());
+
+                            mDb.collection("age")
+                                    .document(age.toString())
+                                    .collection("categories")
+                                    .document(a.getName())
+                                    .set(hash);
+                        }
+                    });
+        }
     }
 }

@@ -81,7 +81,7 @@ public class SettingsFragment extends Fragment {
 
         upgradePremium.setOnClickListener(view -> {
             databaseService.upgradePremium();
-            View inflatedView = getLayoutInflater().inflate(R.layout.activity_main, null);
+            View inflatedView = LayoutInflater.from(getContext()).inflate(R.layout.activity_main, null);
 
             BottomNavigationView navView = inflatedView.findViewById(R.id.nav_view);
             navView.getMenu().getItem(1).setEnabled(true);

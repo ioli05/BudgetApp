@@ -18,7 +18,6 @@ public class UserDetailsModel {
     private Date date;
     private Integer age;
     private boolean usageOfData;
-    private boolean isPremium;
+    private boolean premium;
     private Date createdAt;
-
 }

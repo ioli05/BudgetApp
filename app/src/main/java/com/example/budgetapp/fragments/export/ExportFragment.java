@@ -1,7 +1,12 @@
 package com.example.budgetapp.fragments.export;
 
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,24 +14,22 @@ import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Toast;
-
 import com.example.budgetapp.R;
 import com.example.budgetapp.model.AnalyticModel;
 import com.example.budgetapp.model.CategoryModel;
+import com.example.budgetapp.model.UserDetailsModel;
 import com.example.budgetapp.service.DatabaseService;
+import com.example.budgetapp.utils.PieChartColor;
 import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +37,13 @@ import java.util.stream.Collectors;
 
 import in.goodiebag.carouselpicker.CarouselPicker;
 
-import static com.google.common.collect.Iterables.isEmpty;
 import static java.util.Objects.isNull;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class ExportFragment extends Fragment {
 
     CarouselPicker carouselPicker;
+
     BarChart barChart;
 
     List<CarouselPicker.PickerItem> categories;
@@ -51,7 +54,11 @@ public class ExportFragment extends Fragment {
     ArrayList<CategoryModel> mCategoryListUser = new ArrayList<>();
 
     Map<String, List<AnalyticModel>> map;
+    Map<String, Long> ages;
+
     String categorySelected;
+
+    UserDetailsModel user;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -69,8 +76,10 @@ public class ExportFragment extends Fragment {
 
     private void fetchData() {
         databaseService.refreshCurrentUser();
+        databaseService.getUserDate();
         databaseService.fetchUserCategory();
         databaseService.fetchDefaultCategories();
+        databaseService.fetchAnalytics();
     }
 
     private void initializeListeners() {
@@ -84,9 +93,6 @@ public class ExportFragment extends Fragment {
             else {
                 this.mCategoryList.clear();
                 this.mCategoryList.addAll(categoriesList);
-            }
-            if (!isEmpty(mCategoryList) && !isEmpty(mCategoryListUser)) {
-                initCarousel();
             }
         });
 
@@ -103,12 +109,8 @@ public class ExportFragment extends Fragment {
 
                 barChart.clear();
                 categorySelected = categories.get(position).getText();
-                if (!map.containsKey(categorySelected)) {
-                    databaseService.fetchAnalytics(categorySelected);
-                }
-                else {
-                    putBarData(categorySelected);
-                }
+                putBarData(categorySelected);
+
             }
 
             @Override
@@ -116,11 +118,22 @@ public class ExportFragment extends Fragment {
             }
         });
 
-        this.databaseService.setDatabaseAnalyticsListener(category -> {
-            if (!isNull(category)) {
-                map.put(categorySelected, category);
-            }
+        this.databaseService.setDatabaseAnalyticsListener(map -> {
+            this.map = map;
+            initCarousel();
             putBarData(categorySelected);
+        });
+
+        this.databaseService.setDatabaseAnalyticsAgeListener(map -> {
+            ages = map;
+            putBarData(categorySelected);
+        });
+
+        this.databaseService.setFetchUserDetailsListener(user -> {
+            this.user = user;
+            if (user.isUsageOfData()) {
+                databaseService.fetchAgeAverage(user.getAge());
+            }
         });
 
     }
@@ -128,8 +141,9 @@ public class ExportFragment extends Fragment {
     public void putBarData(String category) {
 
         BarDataSet bar = new BarDataSet(values(category), "");
+        bar.setColors(PieChartColor.getColors());
         BarData barData = new BarData();
-        barData.setBarWidth(0.2f);
+        barData.setBarWidth(0.6f);
         barData.addDataSet(bar);
 
         if (bar.getEntryCount() != 0) {
@@ -144,15 +158,39 @@ public class ExportFragment extends Fragment {
             xAxis.setValueFormatter(new IndexAxisValueFormatter(map.get(categorySelected).stream()
                     .map(AnalyticModel::getPeriod).collect(Collectors.toList())));
 
-            xAxis.setLabelCount(1);
             xAxis.setGranularity(1f);
             xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
             barChart.getAxisRight().setEnabled(false);
             barChart.getLegend().setEnabled(false);
             barChart.getDescription().setEnabled(false);
+            barChart.setVisibleXRangeMaximum(4); // allow 20 values to be displayed at once on the x-axis, not more
+            barChart.moveViewToX(3);
 
+            YAxis leftAxis = barChart.getAxisLeft();
+            leftAxis.setAxisMinimum(0);
+            leftAxis.setAxisMaximum(barChart.getBarData().getYMax() + 30);
+
+            if (!isNull(user) && user.isUsageOfData() && !isNull(ages.get(categorySelected))) {
+
+
+//            if (user.isUsageOfData()) {
+                LimitLine ll1 = new LimitLine(400f, "Average");
+                ll1.setLabelPosition(LimitLine.LimitLabelPosition.LEFT_TOP);
+                ll1.setLineWidth(1f);
+                ll1.setLineColor(Color.BLACK);
+                ll1.setTextSize(10f);
+
+                leftAxis = barChart.getAxisLeft();
+                leftAxis.removeAllLimitLines(); // reset all limit lines to avoid overlapping lines
+                leftAxis.addLimitLine(ll1);
+                leftAxis.setAxisMinimum(0);
+                leftAxis.setAxisMaximum(Math.max(bar.getYMax(), ll1.getLimit()) + 30);
+                leftAxis.setDrawZeroLine(false);
+                leftAxis.setDrawLimitLinesBehindData(true);
+            }
         }
+
     }
 
     private ArrayList<BarEntry> values(String category) {
@@ -171,16 +209,18 @@ public class ExportFragment extends Fragment {
     }
 
     public void initCarousel() {
-        List<String> result = databaseService.getCategories();
+        List<String> result = new ArrayList<>();
+        result.addAll(map.keySet());
 
-        for(String s : result) {
+        for (String s : result) {
             categories.add(new CarouselPicker.TextItem(s, 20));
         }
         CarouselPicker.CarouselViewAdapter textAdapter = new CarouselPicker.
                 CarouselViewAdapter(this.getContext(), categories, 0);
 
+        categorySelected = categories.get(0).getText();
         carouselPicker.setAdapter(textAdapter);
-
+        textAdapter.notifyDataSetChanged();
     }
 
     private void initializeFields() {
@@ -190,6 +230,7 @@ public class ExportFragment extends Fragment {
         databaseService = DatabaseService.instance();
         categories = new ArrayList<>();
         map = new HashMap<>();
+        ages = new HashMap<>();
 
     }
 

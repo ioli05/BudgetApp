@@ -133,6 +133,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
             this.mDatabaseService.fetchTransaction(
                     mStartDate.getText().toString(),
                     mEndDate.getText().toString());
+            progressBar.setVisibility(View.VISIBLE);
         };
 
         mEndDate.setOnClickListener(v -> {
@@ -157,11 +158,13 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
             this.mDatabaseService.fetchTransaction(
                     mStartDate.getText().toString(),
                     mEndDate.getText().toString());
+            progressBar.setVisibility(View.VISIBLE);
         };
 
         this.mDatabaseService.setDatabaseServiceTransactionListener((transactionModels, filTransactionModelList) -> {
             refreshData(transactionModels, filTransactionModelList);
             refreshPieChartData();
+            progressBar.setVisibility(View.GONE);
             mPieChart.notifyDataSetChanged();
             mPieChart.invalidate();
             mTranzactionAdapter.notifyDataSetChanged();
@@ -221,7 +224,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
 
     private void addToPieChart() {
 
-//        progressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
         if (!isNull(this.mPieDataSet)) {
 
             mPieChart.setExtraOffsets(40f, 0f, 40f, 0f);
@@ -263,7 +266,7 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
             mPieChart.setEntryLabelColor(0 );
             mPieChart.setEntryLabelTypeface(Typeface.MONOSPACE);
             mPieChart.getData().getColors();
-//            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.GONE);
         }
     }
 

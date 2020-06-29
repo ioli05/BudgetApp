@@ -144,12 +144,14 @@ public class BudgetFragment extends Fragment {
         mDatabaseService.fetchUserCategory();
 
         mDatabaseService.fetchBudget();
+
     }
 
     private void initializeListeners() {
 
         this.mDatabaseService.setFetchUserDetailsListener(user -> {
             this.user = user;
+            mDatabaseService.fetchAgeAverage(user.getAge());
             refreshDate = user.getDate();
             checkIfToReset();
         });
@@ -275,6 +277,10 @@ public class BudgetFragment extends Fragment {
             }
         }
         mDatabaseService.addToAnalytic(list);
+
+        if (user.isUsageOfData()) {
+            mDatabaseService.addToAge(list, user.getAge());
+        }
     }
 
     private String getPeriodForBudget(Date date) {

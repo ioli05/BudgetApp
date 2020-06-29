@@ -7,18 +7,18 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.Toast;
 
 import com.example.budgetapp.R;
 import com.example.budgetapp.model.fragments.importt.CSVTranzactionFileParser;
@@ -35,6 +35,7 @@ public class ImportFragment extends Fragment {
     private static final int READ_REQUEST_CODE = 42;
 
     private Button importDevice, importManually;
+    private ProgressBar bar;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -72,6 +73,7 @@ public class ImportFragment extends Fragment {
     private void initializeFields() {
         importDevice = this.getView().findViewById(R.id.import_device);
         importManually = this.getView().findViewById(R.id.import_manually);
+        bar = this.getView().findViewById(R.id.importBar);
     }
 
     private String readText(Uri uri) throws FileNotFoundException {
@@ -81,10 +83,12 @@ public class ImportFragment extends Fragment {
         InputStream inputStream = this.getContext().getContentResolver().openInputStream(uri);
         csvTranzactionFileParser.parseFile(inputStream);
 
-        return "lalal";
+        bar.setVisibility(View.GONE);
+        return "";
     }
 
     private void performFileSearch() {
+        bar.setVisibility(View.VISIBLE);
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("*/*");

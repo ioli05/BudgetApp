@@ -86,16 +86,13 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
 
     implementation 'pub.devrel:easypermissions:0.2.0'
-    implementation 'org.apache.pdfbox:pdfbox:1.8.6'
     implementation 'org.apache.commons:commons-lang3:3.9'
-    implementation 'com.tom_roush:pdfbox-android:1.8.10.1'
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation 'com.opencsv:opencsv:4.0'
     implementation 'com.github.GoodieBag:CarouselPicker:v1.1'
 
     implementation 'com.github.ybq:Android-SpinKit:1.4.0'
     implementation 'com.teaanddogdog:mpandroidchartutil:1.0.3'
-    implementation 'com.google.firebase:firebase-perf:19.0.7'
 }
 repositories {
     mavenCentral()
