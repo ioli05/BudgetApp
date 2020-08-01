@@ -218,7 +218,7 @@ public class ExportFragment extends Fragment {
         CarouselPicker.CarouselViewAdapter textAdapter = new CarouselPicker.
                 CarouselViewAdapter(this.getContext(), categories, 0);
 
-        categorySelected = categories.get(0).getText();
+        categorySelected = !categories.isEmpty() ? categories.get(0).getText() : "";
         carouselPicker.setAdapter(textAdapter);
         textAdapter.notifyDataSetChanged();
     }

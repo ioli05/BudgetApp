@@ -39,14 +39,11 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -181,26 +178,25 @@ public class HomeFragment extends Fragment implements OnChartValueSelectedListen
             }
         });
 
-        this.mDatabaseService.setDatabaseTranzactionAddedListener(tranzactionModel -> {
-            //if is between dates => add filtered list
-            Date end = null, start = null;
-            try {
-                end = new SimpleDateFormat("MM/dd/yyyy").parse(mEndDate.getText().toString());
-                start = new SimpleDateFormat("MM/dd/yyyy").parse(mStartDate.getText().toString());
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-            if (tranzactionModel.getDate().compareTo(end) <= 0 && tranzactionModel.getDate().compareTo(start) >= 0) {
-                mTransactionModelListFiltered.add(tranzactionModel);
-                refreshPieChartData();
-                mPieChart.invalidate();
-                mTranzactionAdapter.notifyDataSetChanged();
-            }
-            else {
-                //mTranzactionAdapter.cat
-                mTransactionModelList.add(tranzactionModel);
-            }
-        });
+//        this.mDatabaseService.setDatabaseTranzactionAddedListener(tranzactionModel -> {
+//            //if is between dates => add filtered list
+//            Date end = null, start = null;
+//            try {
+//                end = new SimpleDateFormat("MM/dd/yyyy").parse(mEndDate.getText().toString());
+//                start = new SimpleDateFormat("MM/dd/yyyy").parse(mStartDate.getText().toString());
+//            } catch (ParseException e) {
+//                e.printStackTrace();
+//            }
+//            if (tranzactionModel.getDate().compareTo(end) <= 0 && tranzactionModel.getDate().compareTo(start) >= 0) {
+//                mTransactionModelListFiltered.add(tranzactionModel);
+//                refreshPieChartData();
+//                mPieChart.invalidate();
+//                mTranzactionAdapter.notifyDataSetChanged();
+//            }
+//            else {
+//                mTransactionModelList.add(tranzactionModel);
+//            }
+//        });
     }
 
     private void refreshData() {

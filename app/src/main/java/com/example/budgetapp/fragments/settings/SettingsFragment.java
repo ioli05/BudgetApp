@@ -21,7 +21,6 @@ import com.example.budgetapp.dialog.ChangePasswordDialog;
 import com.example.budgetapp.dialog.DeleteAccountDialog;
 import com.example.budgetapp.dialog.DeleteDataDialog;
 import com.example.budgetapp.service.DatabaseService;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
 public class SettingsFragment extends Fragment {
@@ -81,10 +80,6 @@ public class SettingsFragment extends Fragment {
 
         upgradePremium.setOnClickListener(view -> {
             databaseService.upgradePremium();
-            View inflatedView = LayoutInflater.from(getContext()).inflate(R.layout.activity_main, null);
-
-            BottomNavigationView navView = inflatedView.findViewById(R.id.nav_view);
-            navView.getMenu().getItem(1).setEnabled(true);
         });
         deleteAccount.setOnClickListener(view -> {
             openDeleteAcoountDialog();
@@ -97,6 +92,7 @@ public class SettingsFragment extends Fragment {
         logOut.setOnClickListener(view -> {
             databaseService.logOutUser();
             Intent i = new Intent(this.getActivity(), LoginActivity.class);
+
             startActivity(i);
         });
     }

@@ -179,10 +179,11 @@ public class CSVTranzactionFileParser implements TranzactionCSVFileParser {
 
         for (int i = 1; i < lines.size(); i++) {
             if (lines.get(i)[DETAIL_COLUMN].contains("Terminal")) {
-                name = " " +  getTerminal(lines.get(i));
+                name = " " + getTerminal(lines.get(i));
             }
 
-            if (lines.get(i)[DETAIL_COLUMN].contains("Ordonator") ||
+            if (lines.get(i)[DETAIL_COLUMN].contains("Titular") ||
+                    lines.get(i)[DETAIL_COLUMN].contains("Ordonator") ||
                     lines.get(i)[DETAIL_COLUMN].contains("Beneficiar") ||
                     lines.get(i)[DETAIL_COLUMN].contains("Detalii")) {
 

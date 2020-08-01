@@ -217,6 +217,7 @@ public class BudgetFragment extends Fragment {
         dialog.setContentView(R.layout.dialog_categorylist);
 
         String[] categories = mDatabaseService.getCategories().toArray(new String[0]);
+
         ListView lv = dialog.findViewById(R.id.cat_list);
         ArrayAdapter<String> mAdapter = new ArrayAdapter<String>(this.getContext(),
                 android.R.layout.simple_list_item_1,
@@ -301,7 +302,7 @@ public class BudgetFragment extends Fragment {
         }
 
         LocalDate localDate = LocalDate.of(currentDate.getYear(), currentDate.getMonth().getValue(),
-                currentDate.getDayOfMonth());
+                day);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/dd/yyyy");
 
         mStartDate.setText(localDate.format(formatter));

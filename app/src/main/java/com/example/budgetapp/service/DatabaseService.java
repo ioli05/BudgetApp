@@ -369,6 +369,9 @@ public class DatabaseService {
     }
 
     public void getUserDate() {
+        if (mCurrentUser == null) {
+            mCurrentUser = auth.getCurrentUser();
+        }
         mDb.collection("users").document(mCurrentUser.getUid())
                 .get()
                 .addOnCompleteListener(task -> {
